@@ -187,7 +187,7 @@ MonoBehaviour:
   letterDelay: 0.05
   sentenceDelay: 1
   letterSpeedMultiplier: 0.5
-  dialogueObject: {fileID: 2526415082329192537}
+  dialogueObject: {fileID: 4269285019105603643}
   choiceButtonsObject: {fileID: 1842595862687136701}
   dialogueText: {fileID: 68541608855059190}
   npcNameText: {fileID: 5024439673411925113}
@@ -265,12 +265,12 @@ GameObject:
   - component: {fileID: 7234080415206982687}
   - component: {fileID: 1593655765346716137}
   m_Layer: 5
-  m_Name: Panel
+  m_Name: Dialogue
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &4269285019105603643
 RectTransform:
   m_ObjectHideFlags: 0

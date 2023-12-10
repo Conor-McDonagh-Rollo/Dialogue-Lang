@@ -174,6 +174,15 @@ public class Dialogue : MonoBehaviour
         StartCoroutine(DisplayConversation(ds));
 ;    }
 
+    private DialogueSection FollowRedirects(DialogueSection section)
+    {
+        if (section.Redirect != null && dialogue_dict.ContainsKey(section.Redirect))
+        {
+            return FollowRedirects(dialogue_dict[section.Redirect]);
+        }
+        return section;
+    }
+
     IEnumerator DisplayConversation(DialogueSection ds)
     {
         foreach (GameObject go in buttonList)
@@ -190,8 +199,9 @@ public class Dialogue : MonoBehaviour
         // Check for redirects
         if (ds.Redirect != null)
         {
-            ds = dialogue_dict[ds.Redirect];
+            ds = FollowRedirects(dialogue_dict[ds.Redirect]);
         }
+
 
         List<string> sentences = ds.Lines;
         dialogue.gameObject.SetActive(true);
