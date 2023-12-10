@@ -1,0 +1,18 @@
+count = 0
+
+if [count == 0] [initial] else [section2]
+Welcome to the dialogue lang demo! Select the "Update variable" option to reveal a different dialogue next time you click the button.
+
+Update Variable [INVOKE]
+Exit [EXIT]
+
+if [count == 1] [section2] else [end] 
+And that's how conditions streamline this whole process!
+
+Thanks! [INVOKE]
+
+[end]
+That's it..
+That's the demo.
+
+Exit [EXIT]

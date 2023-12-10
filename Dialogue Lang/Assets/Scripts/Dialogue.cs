@@ -44,46 +44,55 @@ public class DialogueSection
 
 public class Dialogue : MonoBehaviour
 {
-    // Static references
-    static GameObject choiceButtonPrefab;
-    static Transform inventory;
-    static Transform choiceButtons;
-    static Transform dialogue;
-    static TMP_Text dialogue_npcText;
-    static TMP_Text dialogue_npcName;
 
     // Dialogue dictionary object
     Dictionary<string, DialogueSection> dialogue_dict;
 
+    // Received from manager
+    DialogueManager dm;
+    GameObject choiceButtonPrefab;
+    Transform choiceButtons;
+    Transform dialogue;
+    TMP_Text dialogue_npcText;
+    TMP_Text dialogue_npcName;
+    float letterDelay;
+    float sentenceDelay;
+    float letterSpeedMultiplier;
+
     // Private dialogue variables
     bool decisionMade = false;
-    float letterDelay = 0.05f;
-    float sentenceDelay = 1.0f;
     List<GameObject> buttonList = new List<GameObject>();
     UniformVariables uniformVariables = new UniformVariables();
     bool uniformVariablesAlreadyDefined = false;
     bool uniformsChanged = false;
 
+    CursorLockMode cursor_previousLockMode;
+    bool cursor_previousVisible;
+
     // Public dialogue set up per npc
     [Header("Dialogue Setup")]
     public string npc_display_name;
     public string dialogue_file_name;
-    public bool animates = false;
     public UnityEvent onInvoke;
     public static bool isInDialogue = false;
 
 
     private void Start()
     {
-        if (!dialogue)
-        {
-            choiceButtonPrefab = Resources.Load<GameObject>("Prefabs/ChoiceButtonPrefab");
-            inventory = CanvasProperties.items["Inventory"];
-            choiceButtons = CanvasProperties.items["Choice Buttons"].GetChild(0);
-            dialogue = CanvasProperties.items["Dialogue"];
-            dialogue_npcText = dialogue.GetChild(1).GetComponent<TextMeshProUGUI>();
-            dialogue_npcName = dialogue.GetChild(2).GetComponent<TextMeshProUGUI>();
-        }
+        // Grab dialogue manager
+        dm = DialogueManager.GetInstance();
+
+        // Load from dialogue manager
+        choiceButtonPrefab = dm.choiceButtonPrefab;
+        choiceButtons = dm.choiceButtonsObject;
+        dialogue = dm.dialogueObject;
+        dialogue_npcText = dm.dialogueText;
+        dialogue_npcName = dm.npcNameText;
+        letterDelay = dm.letterDelay;
+        sentenceDelay = dm.sentenceDelay;
+        letterSpeedMultiplier = dm.letterSpeedMultiplier;
+
+        // Parse dialogue
         dialogue_dict = ParseDialogueFile(dialogue_file_name);
     }
 
@@ -93,11 +102,11 @@ public class Dialogue : MonoBehaviour
         {
             if ((Input.GetMouseButton(0)))
             {
-                letterDelay = 0.005f;
+                letterDelay = dm.letterDelay * letterSpeedMultiplier;
             }
             else
             {
-                letterDelay = 0.05f;
+                letterDelay = dm.letterDelay;
             }
         }
     }
@@ -135,16 +144,15 @@ public class Dialogue : MonoBehaviour
         }
         isInDialogue = true;
 
-        if (animates)
-        {
-            GetComponent<Animator>().SetBool("Talking", true);
-        }
-
         // Setup dialogue
         dialogue_npcName.text = npc_display_name;
         dialogue_npcText.text = "";
-        
-        PlayerController.mouseOnScreen = true;
+
+        // Allow for cursor to be reset
+        cursor_previousLockMode = Cursor.lockState;
+        cursor_previousVisible = Cursor.visible;
+
+        // Prepare cursor for dialogue choices
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
 
@@ -176,9 +184,9 @@ public class Dialogue : MonoBehaviour
         buttonList.Clear();
 
         // Set actives
-        choiceButtons.parent.gameObject.SetActive(false);
         choiceButtons.gameObject.SetActive(false);
         dialogue.gameObject.SetActive(true);
+        dialogue_npcText.gameObject.SetActive(true);
 
         // Check for redirects
         if (ds.Redirect != null)
@@ -206,9 +214,8 @@ public class Dialogue : MonoBehaviour
     void DisplayPlayerChoices(List<DialogueChoice> choices)
     {
         // Set actives
-        choiceButtons.parent.gameObject.SetActive(true);
         choiceButtons.gameObject.SetActive(true);
-        dialogue.gameObject.SetActive(false);
+        dialogue_npcText.gameObject.SetActive(false);
 
         // Generate choice buttons
         foreach (DialogueChoice dc in choices)
@@ -221,19 +228,6 @@ public class Dialogue : MonoBehaviour
                 b.onClick.AddListener(() => 
                 {
                     ExitDialogue();
-                });
-            }
-            else if (dc.NextHeader == "HOSTILE")
-            {
-                b.onClick.AddListener(() =>
-                {
-                    ExitDialogue();
-                    // MAKE NPC HOSTILE
-                    NPCMovement controller = GetComponent<NPCMovement>();
-                    if (controller)
-                    {
-                        controller.ChangeState(NPCState.Hostile);
-                    }
                 });
             }
             else if (dc.NextHeader == "INVOKE")
@@ -260,8 +254,7 @@ public class Dialogue : MonoBehaviour
         // Exit dialogue part
         dialogue.gameObject.SetActive(false);
         isInDialogue = false;
-        PlayerController.mouseOnScreen = false;
-        Cursor.lockState = CursorLockMode.Locked;
+
         // Exit and reset choices part
         foreach (GameObject go in buttonList)
         {
@@ -271,10 +264,9 @@ public class Dialogue : MonoBehaviour
         choiceButtons.parent.gameObject.SetActive(false);
         choiceButtons.gameObject.SetActive(false);
 
-        if (animates)
-        {
-            GetComponent<Animator>().SetBool("Talking", false);
-        }
+        // Reset cursor
+        Cursor.lockState = cursor_previousLockMode;
+        Cursor.visible = cursor_previousVisible;
     }
 
     private Dictionary<string, DialogueSection> ParseDialogueFile(string resourceName)
