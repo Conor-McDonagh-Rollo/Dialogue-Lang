@@ -60,11 +60,10 @@ public class Dialogue : MonoBehaviour
     float letterSpeedMultiplier;
 
     // Private dialogue variables
-    bool decisionMade = false;
     List<GameObject> buttonList = new List<GameObject>();
     UniformVariables uniformVariables = new UniformVariables();
-    bool uniformVariablesAlreadyDefined = false;
     bool uniformsChanged = false;
+    bool uniformVariablesAlreadyDefined = false;
 
     CursorLockMode cursor_previousLockMode;
     bool cursor_previousVisible;
@@ -271,20 +270,31 @@ public class Dialogue : MonoBehaviour
 
     private Dictionary<string, DialogueSection> ParseDialogueFile(string resourceName)
     {
-        TextAsset textAsset = Resources.Load<UnityEngine.TextAsset>(resourceName);
+        TextAsset textAsset = LoadTextAsset(resourceName);
         if (textAsset == null)
         {
-            Debug.LogError($"Failed to load resource: {resourceName}");
             return null;
         }
 
-        string[] lines = textAsset.text.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+        string[] lines = SplitDialogueLines(textAsset);
         Dictionary<string, DialogueSection> dialogueSections = new Dictionary<string, DialogueSection>();
-        DialogueSection currentSection = null;
         bool lastIfConditionMet = false;
 
-        // First pass: Parse and store all variables and create dialogue sections
+        DialogueSection currentSection = null;
+        ParseVariablesAndInitializeSections(lines, dialogueSections, currentSection);
+        ProcessDialogueSectionsAndChoices(lines, dialogueSections, ref lastIfConditionMet, currentSection);
+
+        // Add the final section
+        if (currentSection != null)
+            dialogueSections[currentSection.Header] = currentSection;
+
+        return dialogueSections;
+    }
+
+    private void ParseVariablesAndInitializeSections(string[] lines, Dictionary<string, DialogueSection> dialogueSections, DialogueSection currentSection)
+    {
         bool firstHeader = true;
+
         foreach (string rawLine in lines)
         {
             string line = rawLine.Trim();
@@ -319,6 +329,10 @@ public class Dialogue : MonoBehaviour
             }
         }
         uniformVariablesAlreadyDefined = true;
+    }
+
+    private void ProcessDialogueSectionsAndChoices(string[] lines, Dictionary<string, DialogueSection> dialogueSections, ref bool lastIfConditionMet, DialogueSection currentSection)
+    {
 
         // Second pass: Process dialogue sections and choices
         foreach (string rawLine in lines)
@@ -344,7 +358,7 @@ public class Dialogue : MonoBehaviour
             }
 
             // Handle header conditions
-            if (line.StartsWith("if") && line.Contains("else") )
+            if (line.StartsWith("if") && line.Contains("else"))
             {
                 bool isIf = line.StartsWith("if");
                 var condition = isIf ? line.Substring(4, line.IndexOf(']') - 4).Trim() : "";
@@ -464,12 +478,21 @@ public class Dialogue : MonoBehaviour
                 currentSection.Lines.Add(line);
             }
         }
+    }
 
-        // Add the final section
-        if (currentSection != null)
-            dialogueSections[currentSection.Header] = currentSection;
+    private string[] SplitDialogueLines(TextAsset textAsset)
+    {
+        return textAsset.text.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+    }
 
-        return dialogueSections;
+    private TextAsset LoadTextAsset(string resourceName)
+    {
+        TextAsset textAsset = Resources.Load<UnityEngine.TextAsset>(resourceName);
+        if (textAsset == null)
+        {
+            Debug.LogError($"Failed to load resource: {resourceName}");
+        }
+        return textAsset;
     }
 
 

@@ -696,6 +696,11 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
+--- !u!224 &1843600950 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 4269285019105603643, guid: 7d9d56d66afdc4d439057c525f820020, type: 3}
+  m_PrefabInstance: {fileID: 6116736873052932994}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &6116736873052932994
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -792,6 +797,10 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 4675247014415746040, guid: 7d9d56d66afdc4d439057c525f820020, type: 3}
+      propertyPath: dialogueObject
+      value: 
+      objectReference: {fileID: 1843600950}
     - target: {fileID: 7565911092021098957, guid: 7d9d56d66afdc4d439057c525f820020, type: 3}
       propertyPath: m_Name
       value: Dialogue
