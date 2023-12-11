@@ -7,6 +7,10 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
 
+/// <summary>
+/// Represents a collection of uniform variables. This class is used to store and manage a set of variables
+/// where each variable is identified by a string key. It provides methods to set and retrieve variable values.
+/// </summary>
 public class UniformVariables
 {
     public Dictionary<string, object> Variables { get; private set; }
@@ -28,12 +32,22 @@ public class UniformVariables
     }
 }
 
+/// <summary>
+/// Represents a choice in a dialogue system. This class is used to store information about a specific choice
+/// within a dialogue, including the text displayed to the user and the identifier of the next dialogue header
+/// to navigate to when this choice is selected.
+/// </summary>
 public class DialogueChoice
 {
     public string Text { get; set; }
     public string NextHeader { get; set; } 
 }
 
+/// <summary>
+/// Represents a section of a dialogue in a narrative or dialogue system. This class contains the content of a
+/// dialogue section, including the header (identifier), any redirection to other dialogue sections, the lines of 
+/// dialogue, and the choices available to the user at the end of the section.
+/// </summary>
 public class DialogueSection
 {
     public string Header { get; set; }
@@ -110,17 +124,35 @@ public class Dialogue : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Sets a variable in the dialogue system. This method assigns a value to a specified key in the uniform variables collection.
+    /// It also marks that the uniforms have changed.
+    /// </summary>
+    /// <param name="key">The key of the variable to set.</param>
+    /// <param name="value">The value to assign to the variable.</param>
     public void SetDialogueVariable(string key, object value)
     {
         uniformVariables.SetVariable(key, value);
         uniformsChanged = true;
     }
 
+    /// <summary>
+    /// Retrieves a variable from the dialogue system. This method returns the value of a specified key from the uniform variables collection.
+    /// </summary>
+    /// <param name="key">The key of the variable to retrieve.</param>
+    /// <returns>The value of the variable if it exists; otherwise, null.</returns>
     public object GetDialogueVariable(string key)
     {
         return uniformVariables.GetVariable(key);
     }
 
+    /// <summary>
+    /// Retrieves a variable from the dialogue system and converts it to an integer. This method attempts to convert the value of a specified key
+    /// from the uniform variables collection to an integer. If the conversion is not possible, an exception is thrown.
+    /// </summary>
+    /// <param name="key">The key of the variable to retrieve and convert.</param>
+    /// <returns>The integer value of the variable.</returns>
+    /// <exception cref="ArgumentException">Thrown when the value cannot be converted to an integer.</exception>
     public int GetDialogueVariableAsInt(string key)
     {
         try
@@ -133,8 +165,21 @@ public class Dialogue : MonoBehaviour
             throw new ArgumentException("Input cannot be converted to an integer.");
         }
     }
-    
 
+    /// <summary>
+    /// Handles the interaction with an NPC (non-player character) in a dialogue system. 
+    /// This method initiates a dialogue if the player is not already in one. It sets up the dialogue environment,
+    /// including cursor state and dialogue UI elements. It also parses and displays the conversation from the dialogue file.
+    /// </summary>
+    /// <remarks>
+    /// The method performs several steps:
+    /// - Checks if the player is already in a dialogue; if so, it returns immediately.
+    /// - Sets the 'isInDialogue' flag to true to indicate the start of a dialogue.
+    /// - Sets up the dialogue UI with the NPC's name and clears any existing text.
+    /// - Saves the current cursor state and updates the cursor for dialogue interaction.
+    /// - Parses the dialogue file if there were changes to the uniform variables since the last interaction.
+    /// - Retrieves and displays the initial section of the dialogue.
+    /// </remarks>
     public void Interact()
     {
         if (isInDialogue)
@@ -174,6 +219,17 @@ public class Dialogue : MonoBehaviour
         StartCoroutine(DisplayConversation(ds));
 ;    }
 
+    /// <summary>
+    /// Resolves any redirects within a dialogue section to find the final section to be displayed. 
+    /// This method recursively follows the redirect chain in the dialogue until it reaches a section without a redirect.
+    /// </summary>
+    /// <param name="section">The initial dialogue section from which to start following redirects.</param>
+    /// <returns>The final dialogue section after resolving all redirects.</returns>
+    /// <remarks>
+    /// This method checks if the provided section has a redirect. If it does, and the redirect points to a valid section key in the dialogue dictionary,
+    /// the method calls itself recursively with the new section. This process repeats until a section without a redirect is reached,
+    /// which is then returned as the final section to display.
+    /// </remarks>
     private DialogueSection FollowRedirects(DialogueSection section)
     {
         if (section.Redirect != null && dialogue_dict.ContainsKey(section.Redirect))
@@ -183,6 +239,21 @@ public class Dialogue : MonoBehaviour
         return section;
     }
 
+    /// <summary>
+    /// Coroutine for displaying a conversation in the dialogue system. This method sequentially displays each sentence in the dialogue section,
+    /// simulating the typing effect with a delay between letters and sentences. After displaying all sentences, it presents the player choices.
+    /// </summary>
+    /// <param name="ds">The dialogue section to display.</param>
+    /// <returns>An enumerator needed for the coroutine execution.</returns>
+    /// <remarks>
+    /// The method performs the following steps:
+    /// - Clears and destroys any existing choice buttons.
+    /// - Sets the dialogue UI elements to active.
+    /// - Follows any redirects to find the final dialogue section to display.
+    /// - Iterates through each sentence in the dialogue section, displaying them one character at a time.
+    /// - After displaying each sentence, there's a delay before moving to the next one.
+    /// - Once all sentences are displayed, it displays the player choices for the current section.
+    /// </remarks>
     IEnumerator DisplayConversation(DialogueSection ds)
     {
         foreach (GameObject go in buttonList)
@@ -220,6 +291,21 @@ public class Dialogue : MonoBehaviour
         DisplayPlayerChoices(ds.Choices);
     }
 
+    /// <summary>
+    /// Coroutine for displaying a conversation in a dialogue system. It sequentially shows each sentence in the dialogue section,
+    /// giving a typewriter-like effect. After displaying all sentences, it shows player choices.
+    /// </summary>
+    /// <param name="ds">The dialogue section containing the sentences and choices to be displayed.</param>
+    /// <returns>An IEnumerator required for coroutine execution in Unity.</returns>
+    /// <remarks>
+    /// The coroutine performs the following steps:
+    /// - Clears existing choice buttons from the UI.
+    /// - Activates necessary UI elements for displaying dialogue and choices.
+    /// - Checks and follows any redirects in the dialogue section to ensure the correct section is displayed.
+    /// - Iterates through each sentence in the dialogue section, adding characters one by one to simulate typing, with a delay defined by 'letterDelay'.
+    /// - After each sentence, waits for a duration defined by 'sentenceDelay' before continuing to the next sentence.
+    /// - Once all sentences are displayed, it invokes 'DisplayPlayerChoices' to show choices to the player based on the dialogue section.
+    /// </remarks>
     void DisplayPlayerChoices(List<DialogueChoice> choices)
     {
         // Set actives
@@ -257,7 +343,23 @@ public class Dialogue : MonoBehaviour
         }
 
     }
-    
+
+    /// <summary>
+    /// Displays the player choices at the end of a dialogue section. This method generates interactive buttons for each choice,
+    /// allowing the player to select their response or action.
+    /// </summary>
+    /// <param name="choices">A list of DialogueChoice objects representing the choices available to the player.</param>
+    /// <remarks>
+    /// The method performs the following steps:
+    /// - Activates the UI element for displaying choices and deactivates the NPC dialogue text element.
+    /// - Iterates through each choice in the provided list, creating a button for each one.
+    /// - Sets the text of each button to match the text of the dialogue choice.
+    /// - Adds an event listener to each button. The listener behavior depends on the 'NextHeader' property of the choice:
+    ///   - If 'NextHeader' is "EXIT", the button will end the dialogue.
+    ///   - If 'NextHeader' is "INVOKE", the button will end the dialogue and invoke a specific event (defined by 'onInvoke').
+    ///   - Otherwise, the button will trigger the display of the next dialogue section indicated by 'NextHeader'.
+    /// - Adds the newly created buttons to the UI and stores them in 'buttonList' for management.
+    /// </remarks>
     void ExitDialogue()
     {
         // Exit dialogue part
@@ -278,6 +380,21 @@ public class Dialogue : MonoBehaviour
         Cursor.visible = cursor_previousVisible;
     }
 
+    /// <summary>
+    /// Parses a dialogue file and constructs a dictionary of dialogue sections. This method reads and interprets the contents of a dialogue file,
+    /// organizing it into a structured format that can be used in the dialogue system.
+    /// </summary>
+    /// <param name="resourceName">The name of the resource file containing the dialogue.</param>
+    /// <returns>A dictionary where keys are section headers and values are DialogueSection objects, or null if the text asset cannot be loaded.</returns>
+    /// <remarks>
+    /// The method performs the following steps:
+    /// - Loads the text asset using the provided resource name.
+    /// - Splits the text asset into individual lines of dialogue.
+    /// - Initializes a new dictionary to hold dialogue sections.
+    /// - Processes each line to build up dialogue sections, including handling conditions and choices.
+    /// - Adds the final dialogue section to the dictionary if it exists.
+    /// - Returns the constructed dictionary of dialogue sections, or null if the resource cannot be found or loaded.
+    /// </remarks>
     private Dictionary<string, DialogueSection> ParseDialogueFile(string resourceName)
     {
         TextAsset textAsset = LoadTextAsset(resourceName);
@@ -301,6 +418,19 @@ public class Dialogue : MonoBehaviour
         return dialogueSections;
     }
 
+    /// <summary>
+    /// Parses the variables and initializes dialogue sections from the provided lines of dialogue. 
+    /// This method is responsible for the first pass of dialogue parsing, setting up headers and variables.
+    /// </summary>
+    /// <param name="lines">The lines of dialogue to be parsed.</param>
+    /// <param name="dialogueSections">A dictionary to store the initialized dialogue sections.</param>
+    /// <param name="currentSection">The current dialogue section being processed.</param>
+    /// <remarks>
+    /// The method performs the following actions:
+    /// - Iterates through each line, trimming leading and trailing whitespace.
+    /// - Identifies and initializes dialogue section headers.
+    /// - Parses and sets variables that haven't been defined before.
+    /// </remarks>
     private void ParseVariablesAndInitializeSections(string[] lines, Dictionary<string, DialogueSection> dialogueSections, DialogueSection currentSection)
     {
         bool firstHeader = true;
@@ -341,6 +471,22 @@ public class Dialogue : MonoBehaviour
         uniformVariablesAlreadyDefined = true;
     }
 
+    /// <summary>
+    /// Processes the dialogue sections and choices based on the lines of dialogue. 
+    /// This method is responsible for the second pass of dialogue parsing, handling dialogue text, sections, and choices.
+    /// </summary>
+    /// <param name="lines">The lines of dialogue to be processed.</param>
+    /// <param name="dialogueSections">A dictionary storing dialogue sections.</param>
+    /// <param name="lastIfConditionMet">A reference to a boolean flag indicating if the last 'if' condition was met.</param>
+    /// <param name="currentSection">The current dialogue section being processed.</param>
+    /// <remarks>
+    /// The method performs the following actions:
+    /// - Skips variable definitions processed in the first pass.
+    /// - Processes headers, including saving the last section and setting the current section.
+    /// - Handles conditional headers and redirects.
+    /// - Parses choices, including conditional choices, and adds them to the current section.
+    /// - Adds normal dialogue lines to the current section.
+    /// </remarks>
     private void ProcessDialogueSectionsAndChoices(string[] lines, Dictionary<string, DialogueSection> dialogueSections, ref bool lastIfConditionMet, DialogueSection currentSection)
     {
 
@@ -490,11 +636,29 @@ public class Dialogue : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Splits the content of a TextAsset into individual lines for processing.
+    /// </summary>
+    /// <param name="textAsset">The TextAsset containing the dialogue text.</param>
+    /// <returns>An array of strings, each representing a line in the TextAsset.</returns>
+    /// <remarks>
+    /// This method splits the text based on carriage returns and newlines, removing empty entries.
+    /// It's used to prepare dialogue text for further parsing.
+    /// </remarks>
     private string[] SplitDialogueLines(TextAsset textAsset)
     {
         return textAsset.text.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
     }
 
+    /// <summary>
+    /// Loads a TextAsset resource by its name.
+    /// </summary>
+    /// <param name="resourceName">The name of the resource to load.</param>
+    /// <returns>The loaded TextAsset, or null if the resource cannot be found.</returns>
+    /// <remarks>
+    /// This method attempts to load a TextAsset using Unity's Resources.Load method.
+    /// It logs an error if the resource cannot be loaded.
+    /// </remarks>
     private TextAsset LoadTextAsset(string resourceName)
     {
         TextAsset textAsset = Resources.Load<UnityEngine.TextAsset>(resourceName);
@@ -505,7 +669,15 @@ public class Dialogue : MonoBehaviour
         return textAsset;
     }
 
-
+    /// <summary>
+    /// Evaluates a condition expressed as a string, comparing a variable from the uniform variables against a value.
+    /// </summary>
+    /// <param name="condition">The condition to evaluate, expressed in a format like "variable operator value".</param>
+    /// <returns>True if the condition is met, false otherwise.</returns>
+    /// <remarks>
+    /// This method supports various operators (==, !=, <, <=, >, >=) and handles both equality/inequality and numerical comparisons.
+    /// It logs an error if non-integer values are used for numerical comparisons.
+    /// </remarks>
     private bool EvaluateCondition(string condition)
     {
         string[] operators = { "==", "!=", "<", "<=", ">", ">=" };
