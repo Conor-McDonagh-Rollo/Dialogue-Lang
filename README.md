@@ -48,3 +48,8 @@ whole process!
 
 Thanks! [EXIT]
 ```
+
+## Generating the Docs
+- Download [Doxygen](https://www.doxygen.nl/download.html)
+- Open a terminal in the root of the repository
+- Type `doxygen Doxyfile` and it should generate it
